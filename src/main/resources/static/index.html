@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đặt Hàng Của Đại Ca</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .product-card { transition: transform 0.2s; }
+        .product-card:hover { transform: translateY(-5px); }
+        .qr-container { text-align: center; padding: 15px; background: #fff; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="#"><i class="bi bi-shop text-warning me-2"></i>ĐẠI CA SHOP</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link active" href="#">Thực đơn</a></li>
+            </ul>
+            <button class="btn btn-warning fw-bold position-relative" data-bs-toggle="modal" data-bs-target="#cartModal">
+                <i class="bi bi-cart3 me-1"></i> Giỏ hàng
+                <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h2 class="text-center fw-bold mb-4 text-uppercase text-dark">Thực Đơn Hôm Nay</h2>
+    <div class="row" id="productList">
+        <div class="col-12 text-center mt-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 text-muted">Đang tải món ăn từ máy chủ...</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-cart3 me-2"></i>Giỏ Hàng Của Bạn</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Tên món</th>
+                            <th style="width: 120px;">Số lượng</th>
+                            <th>Đơn giá</th>
+                            <th>Thành tiền</th>
+                            <th>Xóa</th>
+                        </tr>
+                        </thead>
+                        <tbody id="cartItems">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end fw-bold fs-5 mb-4">Tổng cộng: <span class="text-danger" id="cartTotal">0đ</span></div>
+
+                <hr>
+                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person-lines-fill me-2"></i>Thông Tin Đặt Hàng</h5>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Hình thức nhận hàng</label>
+                    <select id="orderType" class="form-select" onchange="toggleOrderTypeFields()">
+                        <option value="at_shop">Ăn tại quán</option>
+                        <option value="delivery">Giao hàng tận nơi</option>
+                    </select>
+                </div>
+
+                <div id="fieldCustomerInfo" class="row g-3 mb-3 d-none">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Họ tên khách hàng *</label>
+                        <input type="text" id="cusName" class="form-control" placeholder="Nhập họ tên...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Số điện thoại *</label>
+                        <input type="tel" id="cusPhone" class="form-control" placeholder="Nhập số điện thoại...">
+                    </div>
+                </div>
+
+                <div id="fieldAtShop" class="mb-3">
+                    <label class="form-label fw-semibold">Số bàn của bạn *</label>
+                    <input type="number" id="tableNumber" class="form-control" placeholder="Nhập số bàn (Ví dụ: 1, 2, 3...)">
+                </div>
+
+                <div id="fieldDelivery" class="mb-3 d-none">
+                    <label class="form-label fw-semibold">Địa chỉ giao hàng *</label>
+                    <textarea id="deliveryAddress" class="form-control" rows="2" placeholder="Nhập số nhà, tên đường, phường/xã..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-warning fw-bold" onclick="validateAndChoosePayment()">Tiếp tục đặt hàng <i class="bi bi-arrow-right-short"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="paymentChoiceModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="bi bi-wallet2 me-2"></i>Chọn Phương Thức Thanh Toán</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <p class="fs-5 mb-4">Đại ca muốn thanh toán đơn hàng này bằng hình thức nào?</p>
+                <div class="d-grid gap-3">
+                    <button type="button" class="btn btn-success btn-lg fw-bold p-3" onclick="submitOrder('PAY_NOW')">
+                        <i class="bi bi-qr-code-scan me-2"></i> Thanh toán ngay (Chuyển khoản QR)
+                    </button>
+                    <button type="button" class="btn btn-outline-dark btn-lg fw-bold p-3" onclick="submitOrder('COD')">
+                        <i class="bi bi-cash-coin me-2"></i> Thanh toán khi nhận hàng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="qrModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i>Đặt Đơn Thành Công!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="clearCartAndReload()"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="alert alert-success fw-bold fs-5">MÃ ĐƠN HÀNG: <span id="displayOrderCodeQR" class="text-danger"></span></div>
+                <p class="text-muted small">Vui lòng quét mã QR dưới đây để thực hiện thanh toán tự động.</p>
+
+                <div class="qr-container my-3 shadow-sm border">
+                    <img id="qrCodeImg" src="" alt="Mã QR VietQR" class="img-fluid" style="max-height: 300px;">
+                </div>
+
+                <div class="text-start p-2 bg-light rounded border">
+                    <p class="mb-1"><strong>Nội dung CK:</strong> <span id="qrMemo" class="text-primary fw-bold"></span></p>
+                    <p class="mb-0"><strong>Số tiền:</strong> <span id="qrAmount" class="text-danger fw-bold"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success w-100 fw-bold" data-bs-dismiss="modal" onclick="clearCartAndReload()">Tôi đã chuyển khoản xong</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold"><i class="bi bi-bag-check-fill text-warning me-2"></i>Đặt Đơn Thành Công!</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="clearCartAndReload()"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+                <h4 class="fw-bold mt-3">Đơn hàng đã được ghi nhận!</h4>
+                <div class="alert alert-dark fw-bold fs-5 my-3">MÃ ĐƠN HÀNG: <span id="displayOrderCodeCOD" class="text-danger"></span></div>
+                <p class="text-muted">Quán đang chuẩn bị món ăn cho đại ca!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark w-100 fw-bold" data-bs-dismiss="modal" onclick="clearCartAndReload()">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // CẤU HÌNH THÔNG TIN NGÂN HÀNG (VIETQR)
+    const BANK_CONFIG = {
+        bankId: "MB",
+        accountNo: "123456789",
+        accountName: "MAI BACH QUAN"
+    };
+
+    let cart = JSON.parse(localStorage.getItem('shopCart')) || [];
+    let cartModal, paymentChoiceModal, qrModal, successModal;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+        paymentChoiceModal = new bootstrap.Modal(document.getElementById('paymentChoiceModal'));
+        qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+        successModal = new bootstrap.Modal(document.getElementById('successModal'));
+
+        renderCart();
+        // Tự động gọi hàm lấy món ăn khi web vừa bật lên
+        loadProducts();
+    });
+
+    // ================= GỌI API BACKEND =================
+    async function loadProducts() {
+        try {
+            // Gọi API lấy dữ liệu từ Spring Boot
+            const response = await fetch('/api/products');
+            const products = await response.json();
+
+            const productList = document.getElementById('productList');
+            productList.innerHTML = ''; // Xóa sạch dữ liệu trắng màn hình
+
+            // Lặp qua dữ liệu và render HTML
+            products.forEach(item => {
+                if (item.status === 'active') {
+                    productList.innerHTML += `
+                            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                                <div class="card h-100 shadow-sm product-card">
+                                    <img src="${item.imageUrl}" class="card-img-top" alt="${item.name}" style="height: 200px; object-fit: cover;">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title fw-bold">${item.name}</h5>
+                                        <p class="card-text text-danger fw-bold fs-5">${item.price.toLocaleString('vi-VN')}đ</p>
+                                        <button class="btn btn-dark w-100 fw-bold" onclick="addToCart('${item.name}', ${item.price})">Thêm vào giỏ</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                }
+            });
+        } catch (error) {
+            console.error("Lỗi lấy dữ liệu:", error);
+            document.getElementById('productList').innerHTML = '<h5 class="text-center text-danger w-100 mt-5">Lỗi kết nối máy chủ. Đại ca nhớ bật Spring Boot chưa?</h5>';
+        }
+    }
+
+    // ================= XỬ LÝ GIỎ HÀNG =================
+    function addToCart(name, price) {
+        const existingItem = cart.find(item => item.name === name);
+        if (existingItem) {
+            existingItem.quantity += 1;
+        } else {
+            cart.push({ name: name, price: price, quantity: 1 });
+        }
+        saveAndRenderCart();
+        alert(`Đã thêm ${name} vào giỏ hàng thành công!`);
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        saveAndRenderCart();
+    }
+
+    function updateQuantity(index, value) {
+        let qty = parseInt(value);
+        if (isNaN(qty) || qty < 1) removeFromCart(index);
+        else {
+            cart[index].quantity = qty;
+            saveAndRenderCart();
+        }
+    }
+
+    function saveAndRenderCart() {
+        localStorage.setItem('shopCart', JSON.stringify(cart));
+        renderCart();
+    }
+
+    function renderCart() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartTotalElement = document.getElementById('cartTotal');
+        const cartBadge = document.getElementById('cartBadge');
+
+        if(!cartItemsContainer) return;
+        cartItemsContainer.innerHTML = '';
+        let total = 0, totalQty = 0;
+
+        if (cart.length === 0) {
+            cartItemsContainer.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Giỏ hàng trống rỗng!</td></tr>`;
+            cartTotalElement.innerText = "0đ";
+            cartBadge.innerText = "0";
+            return;
+        }
+
+        cart.forEach((item, index) => {
+            let itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            totalQty += item.quantity;
+            cartItemsContainer.innerHTML += `
+                    <tr>
+                        <td><strong>${item.name}</strong></td>
+                        <td>
+                            <input type="number" class="form-control form-control-sm text-center"
+                                value="${item.quantity}" min="1" onchange="updateQuantity(${index}, this.value)">
+                        </td>
+                        <td>${item.price.toLocaleString('vi-VN')}đ</td>
+                        <td class="text-danger fw-bold">${itemTotal.toLocaleString('vi-VN')}đ</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+        });
+        cartTotalElement.innerText = total.toLocaleString('vi-VN') + "đ";
+        cartBadge.innerText = totalQty;
+    }
+
+    // ================= XỬ LÝ FORM ĐẶT HÀNG =================
+    function toggleOrderTypeFields() {
+        const type = document.getElementById('orderType').value;
+        const fieldAtShop = document.getElementById('fieldAtShop');
+        const fieldDelivery = document.getElementById('fieldDelivery');
+        const fieldCustomerInfo = document.getElementById('fieldCustomerInfo');
+
+        if (type === 'at_shop') {
+            fieldAtShop.classList.remove('d-none');
+            fieldDelivery.classList.add('d-none');
+            fieldCustomerInfo.classList.add('d-none');
+        } else {
+            fieldAtShop.classList.add('d-none');
+            fieldDelivery.classList.remove('d-none');
+            fieldCustomerInfo.classList.remove('d-none');
+        }
+    }
+
+    function validateAndChoosePayment() {
+        if (cart.length === 0) { alert("Giỏ hàng đang trống!"); return; }
+        const type = document.getElementById('orderType').value;
+
+        if (type === 'at_shop') {
+            if (!document.getElementById('tableNumber').value.trim()) { alert("Vui lòng nhập số bàn ăn!"); return; }
+        } else {
+            if (!document.getElementById('cusName').value.trim()) { alert("Vui lòng điền họ tên!"); return; }
+            if (!document.getElementById('cusPhone').value.trim()) { alert("Vui lòng nhập số điện thoại!"); return; }
+            if (!document.getElementById('deliveryAddress').value.trim()) { alert("Vui lòng nhập địa chỉ!"); return; }
+        }
+        cartModal.hide();
+        paymentChoiceModal.show();
+    }
+
+    function submitOrder(paymentMethod) {
+        paymentChoiceModal.hide();
+        let totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        let orderCode = "DH" + Math.floor(100000 + Math.random() * 900000);
+
+        if (paymentMethod === 'PAY_NOW') {
+            let memo = `THANH TOAN MA DON ${orderCode}`;
+            let vietQrUrl = `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNo}-compact.png?amount=${totalAmount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(BANK_CONFIG.accountName)}`;
+
+            document.getElementById('displayOrderCodeQR').innerText = orderCode;
+            document.getElementById('qrCodeImg').src = vietQrUrl;
+            document.getElementById('qrMemo').innerText = memo;
+            document.getElementById('qrAmount').innerText = totalAmount.toLocaleString('vi-VN') + "đ";
+            qrModal.show();
+        } else if (paymentMethod === 'COD') {
+            document.getElementById('displayOrderCodeCOD').innerText = orderCode;
+            successModal.show();
+        }
+    }
+
+    function clearCartAndReload() {
+        cart = [];
+        localStorage.removeItem('shopCart');
+        window.location.reload();
+    }
+</script>
+</body>
+</html>
