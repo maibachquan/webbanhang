@@ -362,23 +362,49 @@
         paymentChoiceModal.show();
     }
 
-    function submitOrder(paymentMethod) {
+    async function submitOrder(paymentMethod) {
         paymentChoiceModal.hide();
         let totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         let orderCode = "DH" + Math.floor(100000 + Math.random() * 900000);
 
-        if (paymentMethod === 'PAY_NOW') {
-            let memo = `THANH TOAN MA DON ${orderCode}`;
-            let vietQrUrl = `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNo}-compact.png?amount=${totalAmount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(BANK_CONFIG.accountName)}`;
+        // Gom dữ liệu từ form nhập vào
+        const orderData = {
+            orderCode: orderCode,
+            orderType: document.getElementById('orderType').value,
+            customerName: document.getElementById('cusName').value.trim() || "Khách tại bàn",
+            customerPhone: document.getElementById('cusPhone').value.trim() || "N/A",
+            tableNumber: parseInt(document.getElementById('tableNumber').value) || null,
+            deliveryAddress: document.getElementById('deliveryAddress').value.trim() || "Ăn tại quán",
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod
+        };
 
-            document.getElementById('displayOrderCodeQR').innerText = orderCode;
-            document.getElementById('qrCodeImg').src = vietQrUrl;
-            document.getElementById('qrMemo').innerText = memo;
-            document.getElementById('qrAmount').innerText = totalAmount.toLocaleString('vi-VN') + "đ";
-            qrModal.show();
-        } else if (paymentMethod === 'COD') {
-            document.getElementById('displayOrderCodeCOD').innerText = orderCode;
-            successModal.show();
+        try {
+            // Bắn dữ liệu đơn hàng xuống MySQL thông qua Spring Boot
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            });
+
+            if (response.ok) {
+                if (paymentMethod === 'PAY_NOW') {
+                    let memo = `THANH TOAN MA DON ${orderCode}`;
+                    let vietQrUrl = `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNo}-compact.png?amount=${totalAmount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(BANK_CONFIG.accountName)}`;
+
+                    document.getElementById('displayOrderCodeQR').innerText = orderCode;
+                    document.getElementById('qrCodeImg').src = vietQrUrl;
+                    document.getElementById('qrMemo').innerText = memo;
+                    document.getElementById('qrAmount').innerText = totalAmount.toLocaleString('vi-VN') + "đ";
+                    qrModal.show();
+                } else if (paymentMethod === 'COD') {
+                    document.getElementById('displayOrderCodeCOD').innerText = orderCode;
+                    successModal.show();
+                }
+            }
+        } catch (error) {
+            console.error("Lỗi đặt hàng:", error);
+            alert("Hệ thống bận, đại ca vui lòng thử lại!");
         }
     }
 
@@ -398,21 +424,30 @@
         resultDiv.innerHTML = '<div class="text-center my-3"><div class="spinner-border text-info"></div></div>';
 
         try {
-            // TẠM THỜI LÀM GIAO DIỆN CHỜ BACKEND Java
-            // Lát nữa có API thì sẽ mở khóa gọi thẳng xuống Database
+            const response = await fetch(`/api/orders/${code}`);
+            const order = await response.json();
 
-            setTimeout(() => {
-                resultDiv.innerHTML = `
-                        <div class="alert alert-warning border border-warning shadow-sm mt-3">
-                            <h6 class="fw-bold text-dark mb-2">Mã Đơn: ${code}</h6>
-                            <p class="mb-1"><strong>Trạng thái:</strong> <span class="badge bg-secondary">Chờ xử lý</span></p>
-                            <p class="mb-0 small text-danger"><em>Hệ thống đang chờ nối thông mạch phần đặt đơn xuống MySQL!</em></p>
-                        </div>
-                    `;
-            }, 1000);
+            if (!order || !order.orderCode) {
+                resultDiv.innerHTML = '<div class="alert alert-danger mt-3">Không tìm thấy mã đơn hàng này!</div>';
+                return;
+            }
 
+            let badgeClass = 'bg-warning';
+            let statusText = 'Chờ xử lý';
+            if (order.status === 'COMPLETED') { badgeClass = 'bg-success'; statusText = 'Đã giao món'; }
+            if (order.status === 'CANCELLED') { badgeClass = 'bg-danger'; statusText = 'Đã hủy'; }
+
+            resultDiv.innerHTML = `
+                    <div class="alert alert-light border border-info shadow-sm mt-3 text-dark">
+                        <h6 class="fw-bold text-primary mb-2"><i class="bi bi-receipt"></i> Mã Đơn: ${order.orderCode}</h6>
+                        <p class="mb-1"><strong>Khách hàng:</strong> ${order.customerName}</p>
+                        <p class="mb-1"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">${order.totalAmount.toLocaleString('vi-VN')}đ</span></p>
+                        <p class="mb-1"><strong>Hình thức:</strong> ${order.orderType === 'at_shop' ? 'Ăn tại quán' : 'Giao hàng'}</p>
+                        <p class="mb-0"><strong>Trạng thái:</strong> <span class="badge ${badgeClass}">${statusText}</span></p>
+                    </div>
+                `;
         } catch (error) {
-            resultDiv.innerHTML = '<p class="text-danger text-center mt-3 fw-bold">Lỗi hệ thống hoặc không tìm thấy đơn!</p>';
+            resultDiv.innerHTML = '<div class="alert alert-danger mt-3">Mã đơn không tồn tại hoặc lỗi hệ thống!</div>';
         }
     }
 </script>
