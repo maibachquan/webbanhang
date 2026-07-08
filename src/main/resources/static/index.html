@@ -34,12 +34,16 @@
 
         /* ── NAVBAR ── */
         nav.main-nav {
-            background: var(--white);
+            background: var(--white) !important;
             border-bottom: 1px solid var(--border);
             position: sticky; top: 0; z-index: 1000;
             padding: 0 20px;
             height: 60px;
-            display: flex !important; align-items: center; justify-content: space-between;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
         }
 
         .brand {
@@ -47,11 +51,17 @@
             color: var(--text); letter-spacing: -0.5px;
             display: flex; align-items: center; gap: 8px;
             text-decoration: none;
+            flex-shrink: 0;
         }
 
         .brand-dot { color: var(--or); }
 
-        .nav-right { display: flex; align-items: center; gap: 10px; }
+        .nav-right {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px;
+            margin-left: auto;
+        }
 
         .btn-track {
             padding: 7px 14px; border-radius: 8px;
@@ -315,7 +325,7 @@
         #addToast.show { transform: translateX(0); }
 
         @media (max-width: 600px) {
-            nav { padding: 0 14px; }
+            nav.main-nav { padding: 0 14px; }
             .page-title, .grid-wrap { padding-left: 14px; padding-right: 14px; }
             .btn-track .t { display: none; }
         }
@@ -324,7 +334,7 @@
 <body>
 
 <!-- NAVBAR -->
-<nav>
+<nav class="main-nav">
     <a class="brand" href="#">🔥 ĐẠI CA<span class="brand-dot">&nbsp;SHOP</span></a>
     <div class="nav-right">
         <button class="btn-track" onclick="trackingModal.show()">
