@@ -3,197 +3,507 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Đặt Hàng Của Đại Ca</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Đại Ca Shop – Đặt Món</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f8f9fa; }
-        .product-card { transition: transform 0.2s; }
-        .product-card:hover { transform: translateY(-5px); }
-        .qr-container { text-align: center; padding: 15px; background: #fff; border-radius: 8px; }
+        *, *::before, *::after { box-sizing: border-box; }
+
+        :root {
+            --or: #f97316;
+            --or-d: #ea580c;
+            --bg: #f5f5f5;
+            --white: #ffffff;
+            --text: #1a1a1a;
+            --muted: #71717a;
+            --border: #e4e4e7;
+            --green: #16a34a;
+            --red: #dc2626;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif !important;
+            background: var(--bg) !important;
+            color: var(--text);
+            min-height: 100vh;
+            margin: 0; padding: 0;
+        }
+
+        /* ── NAVBAR ── */
+        nav.main-nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 1000;
+            padding: 0 20px;
+            height: 60px;
+            display: flex !important; align-items: center; justify-content: space-between;
+        }
+
+        .brand {
+            font-size: 18px; font-weight: 800;
+            color: var(--text); letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 8px;
+            text-decoration: none;
+        }
+
+        .brand-dot { color: var(--or); }
+
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+
+        .btn-track {
+            padding: 7px 14px; border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: var(--muted); font-size: 13px; font-weight: 500;
+            font-family: 'Inter', sans-serif; cursor: pointer;
+            display: flex; align-items: center; gap: 5px;
+            transition: all 0.2s;
+        }
+        .btn-track:hover { border-color: var(--or); color: var(--or); }
+
+        .btn-cart {
+            padding: 8px 16px; border-radius: 8px;
+            background: var(--or);
+            border: none; color: #fff;
+            font-size: 13px; font-weight: 700;
+            font-family: 'Inter', sans-serif; cursor: pointer;
+            display: flex; align-items: center; gap: 6px;
+            position: relative; transition: background 0.2s;
+        }
+        .btn-cart:hover { background: var(--or-d); }
+
+        #cartBadge {
+            position: absolute; top: -6px; right: -6px;
+            background: var(--red); color: #fff;
+            font-size: 10px; font-weight: 700;
+            min-width: 18px; height: 18px;
+            border-radius: 9px; display: flex;
+            align-items: center; justify-content: center;
+            padding: 0 4px; border: 2px solid var(--white);
+        }
+
+        /* ── PAGE TITLE ── */
+        .page-title {
+            max-width: 1200px; margin: 0 auto;
+            padding: 28px 20px 20px;
+        }
+        .page-title h1 { font-size: 22px; font-weight: 800; }
+        .page-title p  { font-size: 14px; color: var(--muted); margin-top: 4px; }
+
+        /* ── PRODUCT GRID ── */
+        .grid-wrap {
+            max-width: 1200px; margin: 0 auto;
+            padding: 0 20px 60px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        /* Product Card */
+        .pc {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .pc:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .pc img {
+            width: 100%; height: 180px;
+            object-fit: cover; display: block;
+        }
+
+        .pc-body { padding: 14px; }
+
+        .pc-name {
+            font-size: 15px; font-weight: 700;
+            margin-bottom: 4px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .pc-price {
+            font-size: 18px; font-weight: 800;
+            color: var(--or); margin-bottom: 12px;
+        }
+
+        .btn-add {
+            width: 100%; padding: 9px;
+            border-radius: 8px;
+            border: 1.5px solid var(--or);
+            background: transparent; color: var(--or);
+            font-size: 13px; font-weight: 600;
+            font-family: 'Inter', sans-serif; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-add:hover { background: var(--or); color: #fff; }
+
+        /* States */
+        .state-center {
+            grid-column: 1/-1; text-align: center;
+            padding: 60px 20px; color: var(--muted);
+        }
+        .state-center i { font-size: 40px; display: block; margin-bottom: 10px; opacity: 0.3; }
+
+        .spin {
+            width: 32px; height: 32px;
+            border: 2.5px solid var(--border);
+            border-top-color: var(--or);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── MODALS ── */
+        .modal-content {
+            border-radius: 14px; border: 1px solid var(--border);
+            font-family: 'Inter', sans-serif;
+        }
+        .modal-header { border-bottom: 1px solid var(--border); padding: 18px 20px; }
+        .modal-title  { font-size: 16px; font-weight: 700; }
+        .modal-body   { padding: 20px; }
+        .modal-footer { border-top: 1px solid var(--border); padding: 14px 20px; gap: 8px; }
+
+        .form-label {
+            font-size: 12px; font-weight: 600;
+            color: var(--muted); text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 5px; display: block;
+        }
+
+        .form-control, .form-select {
+            font-family: 'Inter', sans-serif; font-size: 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px; padding: 9px 12px;
+            color: var(--text); width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--or); outline: none;
+            box-shadow: 0 0 0 3px rgba(249,115,22,0.12);
+        }
+        .form-control::placeholder { color: #a1a1aa; }
+        .mb-3 { margin-bottom: 14px; }
+
+        /* Cart items */
+        .cart-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 0; border-bottom: 1px solid var(--border);
+        }
+        .cart-item:last-child { border-bottom: none; }
+        .ci-name  { flex: 1; font-size: 14px; font-weight: 600; }
+        .ci-qty   {
+            width: 56px; text-align: center;
+            border: 1px solid var(--border); border-radius: 7px;
+            padding: 6px 4px; font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 600; color: var(--text);
+        }
+        .ci-qty:focus { border-color: var(--or); outline: none; }
+        .ci-price { font-weight: 700; color: var(--or); min-width: 80px; text-align: right; font-size: 14px; }
+        .ci-del {
+            width: 30px; height: 30px; border-radius: 7px;
+            border: 1px solid #fee2e2; background: #fef2f2;
+            color: var(--red); cursor: pointer; font-size: 13px;
+            display: grid; place-items: center; transition: background 0.2s;
+        }
+        .ci-del:hover { background: #fee2e2; }
+
+        .cart-total {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px; margin-top: 14px;
+            background: #fff7ed; border: 1px solid #fed7aa;
+            border-radius: 10px;
+        }
+        .ct-lbl { font-size: 13px; color: var(--muted); font-weight: 500; }
+        .ct-num  { font-size: 20px; font-weight: 800; color: var(--or); }
+
+        .empty-cart { text-align: center; padding: 36px 0; color: var(--muted); }
+        .empty-cart i { font-size: 40px; display: block; margin-bottom: 10px; opacity: 0.2; }
+
+        /* Payment */
+        .pay-opt {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px; border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: pointer; width: 100%; text-align: left;
+            font-family: 'Inter', sans-serif;
+            background: var(--white); transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        .pay-opt:last-child { margin-bottom: 0; }
+        .pay-opt:hover { border-color: var(--or); background: #fff7ed; }
+        .pay-opt .pay-icon { font-size: 24px; }
+        .pay-opt .pay-title { font-size: 14px; font-weight: 700; }
+        .pay-opt .pay-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+        /* Order code */
+        .oc {
+            display: inline-block; padding: 8px 20px;
+            background: #fff7ed; border: 1.5px solid #fed7aa;
+            border-radius: 8px; font-size: 20px;
+            font-weight: 800; color: var(--or); letter-spacing: 2px;
+        }
+
+        .qr-wrap { background: #f8f8f8; border-radius: 10px; padding: 12px; display: inline-block; }
+        .qr-info { background: #f9fafb; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+        .qr-info p { font-size: 13px; margin-bottom: 4px; }
+        .qr-info p:last-child { margin-bottom: 0; }
+
+        .success-icon {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: #dcfce7; border: 2px solid #86efac;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 32px; margin: 0 auto 14px;
+            animation: sPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes sPop { from { transform: scale(0); } to { transform: scale(1); } }
+
+        /* Track result */
+        .track-card {
+            background: #f9fafb; border: 1px solid var(--border);
+            border-radius: 10px; padding: 16px;
+        }
+        .tf { margin-bottom: 10px; }
+        .tf:last-child { margin-bottom: 0; }
+        .tf-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 2px; }
+        .tf-val { font-size: 14px; font-weight: 600; }
+
+        /* Buttons */
+        .btn-primary {
+            background: var(--or); border: none; color: #fff;
+            padding: 10px 22px; border-radius: 8px;
+            font-size: 14px; font-weight: 700;
+            font-family: 'Inter', sans-serif; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-primary:hover { background: var(--or-d); }
+        .btn-primary.w100 { width: 100%; }
+        .btn-primary.green { background: var(--green); }
+        .btn-primary.green:hover { background: #15803d; }
+
+        .btn-sec {
+            background: var(--white); border: 1px solid var(--border);
+            color: var(--muted); padding: 10px 20px;
+            border-radius: 8px; font-size: 14px; font-weight: 600;
+            font-family: 'Inter', sans-serif; cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-sec:hover { border-color: #a1a1aa; color: var(--text); }
+
+        .sep { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+        /* Toast */
+        #addToast {
+            position: fixed; top: 68px; right: 16px; z-index: 9999;
+            background: var(--white); border: 1px solid #bbf7d0;
+            padding: 10px 16px; border-radius: 10px;
+            font-size: 13px; font-weight: 600; color: var(--green);
+            display: flex; align-items: center; gap: 7px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transform: translateX(120%); transition: transform 0.3s;
+        }
+        #addToast.show { transform: translateX(0); }
+
+        @media (max-width: 600px) {
+            nav { padding: 0 14px; }
+            .page-title, .grid-wrap { padding-left: 14px; padding-right: 14px; }
+            .btn-track .t { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="#"><i class="bi bi-shop text-warning me-2"></i>ĐẠI CA SHOP</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
+<!-- NAVBAR -->
+<nav>
+    <a class="brand" href="#">🔥 ĐẠI CA<span class="brand-dot">&nbsp;SHOP</span></a>
+    <div class="nav-right">
+        <button class="btn-track" onclick="trackingModal.show()">
+            <i class="bi bi-search"></i><span class="t">Tra cứu đơn</span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link active" href="#">Thực đơn</a></li>
-                <li class="nav-item">
-                    <a class="nav-link fw-bold text-info" href="#" data-bs-toggle="modal" data-bs-target="#trackingModal">
-                        <i class="bi bi-search"></i> Tra cứu đơn
-                    </a>
-                </li>
-            </ul>
-            <button class="btn btn-warning fw-bold position-relative" data-bs-toggle="modal" data-bs-target="#cartModal">
-                <i class="bi bi-cart3 me-1"></i> Giỏ hàng
-                <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
-            </button>
-        </div>
+        <button class="btn-cart" onclick="cartModal.show()">
+            <i class="bi bi-bag"></i> Giỏ hàng
+            <span id="cartBadge">0</span>
+        </button>
     </div>
 </nav>
 
-<div class="container mt-5">
-    <h2 class="text-center fw-bold mb-4 text-uppercase text-dark">Thực Đơn Hôm Nay</h2>
-    <div class="row" id="productList">
-        <div class="col-12 text-center mt-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2 text-muted">Đang tải món ăn từ máy chủ...</p>
+<!-- TITLE -->
+<div class="page-title">
+    <h1>Thực Đơn Hôm Nay 🍜</h1>
+    <p>Chọn món yêu thích – đặt ngay tại bàn hoặc giao tận nơi</p>
+</div>
+
+<!-- PRODUCTS -->
+<div class="grid-wrap">
+    <div class="product-grid" id="productList">
+        <div class="state-center">
+            <div class="spin"></div>
+            <p>Đang tải thực đơn...</p>
         </div>
     </div>
 </div>
 
+<!-- ═══ CART MODAL ═══ -->
 <div class="modal fade" id="cartModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-cart3 me-2"></i>Giỏ Hàng Của Bạn</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-bag me-2" style="color:var(--or)"></i>Giỏ hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead>
-                        <tr>
-                            <th>Tên món</th>
-                            <th style="width: 120px;">Số lượng</th>
-                            <th>Đơn giá</th>
-                            <th>Thành tiền</th>
-                            <th>Xóa</th>
-                        </tr>
-                        </thead>
-                        <tbody id="cartItems">
-                        </tbody>
-                    </table>
-                </div>
-                <div class="text-end fw-bold fs-5 mb-4">Tổng cộng: <span class="text-danger" id="cartTotal">0đ</span></div>
+                <div id="cartItemsWrapper"></div>
+                <table style="display:none"><tbody id="cartItems"></tbody></table>
 
-                <hr>
-                <h5 class="fw-bold text-dark mb-3"><i class="bi bi-person-lines-fill me-2"></i>Thông Tin Đặt Hàng</h5>
+                <div class="cart-total">
+                    <span class="ct-lbl">Tổng cộng</span>
+                    <span class="ct-num" id="cartTotal">0đ</span>
+                </div>
+
+                <hr class="sep">
+                <p style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Thông tin nhận hàng</p>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Hình thức nhận hàng</label>
+                    <label class="form-label">Hình thức</label>
                     <select id="orderType" class="form-select" onchange="toggleOrderTypeFields()">
-                        <option value="at_shop">Ăn tại quán</option>
-                        <option value="delivery">Giao hàng tận nơi</option>
+                        <option value="at_shop">🪑 Ăn tại quán</option>
+                        <option value="delivery">🛵 Giao hàng tận nơi</option>
                     </select>
                 </div>
 
-                <div id="fieldCustomerInfo" class="row g-3 mb-3 d-none">
+                <div id="fieldCustomerInfo" class="row g-2 mb-3 d-none">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Họ tên khách hàng *</label>
+                        <label class="form-label">Họ tên *</label>
                         <input type="text" id="cusName" class="form-control" placeholder="Nhập họ tên...">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Số điện thoại *</label>
-                        <input type="tel" id="cusPhone" class="form-control" placeholder="Nhập số điện thoại...">
+                        <label class="form-label">Số điện thoại *</label>
+                        <input type="tel" id="cusPhone" class="form-control" placeholder="Nhập SĐT...">
                     </div>
                 </div>
 
                 <div id="fieldAtShop" class="mb-3">
-                    <label class="form-label fw-semibold">Số bàn của bạn *</label>
-                    <input type="number" id="tableNumber" class="form-control" placeholder="Nhập số bàn (Ví dụ: 1, 2, 3...)">
+                    <label class="form-label">Số bàn *</label>
+                    <input type="number" id="tableNumber" class="form-control" placeholder="Nhập số bàn (VD: 1, 2, 3...)">
                 </div>
 
                 <div id="fieldDelivery" class="mb-3 d-none">
-                    <label class="form-label fw-semibold">Địa chỉ giao hàng *</label>
-                    <textarea id="deliveryAddress" class="form-control" rows="2" placeholder="Nhập số nhà, tên đường, phường/xã..."></textarea>
+                    <label class="form-label">Địa chỉ giao hàng *</label>
+                    <textarea id="deliveryAddress" class="form-control" rows="2" placeholder="Số nhà, đường, phường/xã..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Đóng</button>
-                <button type="button" class="btn btn-warning fw-bold" onclick="validateAndChoosePayment()">Tiếp tục đặt hàng <i class="bi bi-arrow-right-short"></i></button>
+                <button class="btn-sec" data-bs-dismiss="modal">Đóng</button>
+                <button class="btn-primary" onclick="validateAndChoosePayment()">Tiếp tục →</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- ═══ PAYMENT MODAL ═══ -->
 <div class="modal fade" id="paymentChoiceModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title fw-bold"><i class="bi bi-wallet2 me-2"></i>Chọn Phương Thức Thanh Toán</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title">Chọn hình thức thanh toán</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body text-center py-4">
-                <p class="fs-5 mb-4">Đại ca muốn thanh toán đơn hàng này bằng hình thức nào?</p>
-                <div class="d-grid gap-3">
-                    <button type="button" class="btn btn-success btn-lg fw-bold p-3" onclick="submitOrder('PAY_NOW')">
-                        <i class="bi bi-qr-code-scan me-2"></i> Thanh toán ngay (Chuyển khoản QR)
-                    </button>
-                    <button type="button" class="btn btn-outline-dark btn-lg fw-bold p-3" onclick="submitOrder('COD')">
-                        <i class="bi bi-cash-coin me-2"></i> Thanh toán khi nhận hàng
-                    </button>
-                </div>
+            <div class="modal-body">
+                <button class="pay-opt" onclick="submitOrder('PAY_NOW')">
+                    <span class="pay-icon">🏦</span>
+                    <div>
+                        <div class="pay-title">Chuyển khoản QR</div>
+                        <div class="pay-sub">Quét mã QR – Thanh toán tự động</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:#d4d4d8"></i>
+                </button>
+                <button class="pay-opt" onclick="submitOrder('COD')">
+                    <span class="pay-icon">💵</span>
+                    <div>
+                        <div class="pay-title">Tiền mặt khi nhận</div>
+                        <div class="pay-sub">Trả tiền khi nhận món / nhận hàng</div>
+                    </div>
+                    <i class="bi bi-chevron-right ms-auto" style="color:#d4d4d8"></i>
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- ═══ QR MODAL ═══ -->
 <div class="modal fade" id="qrModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i>Đặt Đơn Thành Công!</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="clearCartAndReload()"></button>
+            <div class="modal-header" style="background:#f0fdf4;border-color:#bbf7d0">
+                <h5 class="modal-title" style="color:var(--green)"><i class="bi bi-check-circle-fill me-2"></i>Đặt đơn thành công!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="clearCartAndReload()"></button>
             </div>
             <div class="modal-body text-center">
-                <div class="alert alert-success fw-bold fs-5">MÃ ĐƠN HÀNG: <span id="displayOrderCodeQR" class="text-danger"></span></div>
-                <p class="text-muted small">Vui lòng quét mã QR dưới đây để thực hiện thanh toán tự động.</p>
-
-                <div class="qr-container my-3 shadow-sm border">
-                    <img id="qrCodeImg" src="" alt="Mã QR VietQR" class="img-fluid" style="max-height: 300px;">
-                </div>
-
-                <div class="text-start p-2 bg-light rounded border">
-                    <p class="mb-1"><strong>Nội dung CK:</strong> <span id="qrMemo" class="text-primary fw-bold"></span></p>
-                    <p class="mb-0"><strong>Số tiền:</strong> <span id="qrAmount" class="text-danger fw-bold"></span></p>
+                <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Mã đơn hàng của bạn</p>
+                <div class="oc" id="displayOrderCodeQR"></div>
+                <p style="color:var(--muted);font-size:13px;margin:14px 0 8px">Quét mã QR để thanh toán</p>
+                <div class="qr-wrap"><img id="qrCodeImg" src="" alt="QR" style="max-height:250px;max-width:100%"></div>
+                <div class="qr-info text-start mt-3">
+                    <p><strong>Nội dung CK:</strong> <span id="qrMemo" style="color:#2563eb"></span></p>
+                    <p><strong>Số tiền:</strong> <span id="qrAmount" style="color:var(--or);font-weight:800"></span></p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-success w-100 fw-bold" data-bs-dismiss="modal" onclick="clearCartAndReload()">Tôi đã chuyển khoản xong</button>
+                <button class="btn-primary green w100" data-bs-dismiss="modal" onclick="clearCartAndReload()">
+                    ✅ Tôi đã chuyển khoản xong
+                </button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- ═══ SUCCESS MODAL (COD) ═══ -->
 <div class="modal fade" id="successModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-dark text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-bag-check-fill text-warning me-2"></i>Đặt Đơn Thành Công!</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="clearCartAndReload()"></button>
+            <div class="modal-header" style="background:#f0fdf4;border-color:#bbf7d0">
+                <h5 class="modal-title" style="color:var(--green)"><i class="bi bi-bag-check-fill me-2"></i>Đặt đơn thành công!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="clearCartAndReload()"></button>
             </div>
-            <div class="modal-body text-center py-4">
-                <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
-                <h4 class="fw-bold mt-3">Đơn hàng đã được ghi nhận!</h4>
-                <div class="alert alert-dark fw-bold fs-5 my-3">MÃ ĐƠN HÀNG: <span id="displayOrderCodeCOD" class="text-danger"></span></div>
-                <p class="text-muted">Quán đang chuẩn bị món ăn cho đại ca!</p>
+            <div class="modal-body text-center" style="padding:36px 20px">
+                <div class="success-icon">✅</div>
+                <h5 style="font-weight:800;margin-bottom:6px">Đơn hàng đã ghi nhận!</h5>
+                <p style="color:var(--muted);font-size:14px;margin-bottom:20px">Quán đang chuẩn bị cho đại ca! 🍜</p>
+                <p style="font-size:12px;color:var(--muted);margin-bottom:6px">Mã đơn hàng</p>
+                <div class="oc" id="displayOrderCodeCOD"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-dark w-100 fw-bold" data-bs-dismiss="modal" onclick="clearCartAndReload()">Đóng</button>
+                <button class="btn-primary w100" data-bs-dismiss="modal" onclick="clearCartAndReload()">Đóng</button>
             </div>
         </div>
     </div>
 </div>
 
+<!-- ═══ TRACKING MODAL ═══ -->
 <div class="modal fade" id="trackingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-search me-2"></i>Tra Cứu Đơn Hàng</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-search me-2" style="color:var(--or)"></i>Tra cứu đơn hàng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-2">Nhập mã đơn hàng của đại ca (Ví dụ: DH123456)</p>
-                <div class="input-group mb-3">
-                    <input type="text" id="searchOrderCode" class="form-control" placeholder="Mã đơn hàng...">
-                    <button class="btn btn-primary fw-bold" onclick="trackOrder()">Tìm kiếm</button>
+                <p style="font-size:13px;color:var(--muted);margin-bottom:10px">Nhập mã đơn hàng (VD: DH123456)</p>
+                <div style="display:flex;gap:8px;margin-bottom:14px">
+                    <input type="text" id="searchOrderCode" class="form-control" placeholder="Mã đơn hàng..." style="flex:1">
+                    <button class="btn-primary" style="padding:9px 16px;white-space:nowrap" onclick="trackOrder()">
+                        <i class="bi bi-search"></i>
+                    </button>
                 </div>
                 <div id="trackingResult" class="d-none"></div>
             </div>
@@ -201,264 +511,182 @@
     </div>
 </div>
 
+<!-- Toast -->
+<div id="addToast"><i class="bi bi-check-circle-fill"></i><span id="addToastMsg"></span></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    // CẤU HÌNH THÔNG TIN NGÂN HÀNG (VIETQR)
-    const BANK_CONFIG = {
-        bankId: "MB",
-        accountNo: "0986734025",
-        accountName: "MAI BACH QUAN"
-    };
-
+    const BANK_CONFIG = { bankId: "MB", accountNo: "0986734025", accountName: "MAI BACH QUAN" };
     let cart = JSON.parse(localStorage.getItem('shopCart')) || [];
     let cartModal, paymentChoiceModal, qrModal, successModal, trackingModal;
 
     window.addEventListener('DOMContentLoaded', () => {
-        cartModal = new bootstrap.Modal(document.getElementById('cartModal'));
+        cartModal          = new bootstrap.Modal(document.getElementById('cartModal'));
         paymentChoiceModal = new bootstrap.Modal(document.getElementById('paymentChoiceModal'));
-        qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
-        successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        trackingModal = new bootstrap.Modal(document.getElementById('trackingModal'));
-
+        qrModal            = new bootstrap.Modal(document.getElementById('qrModal'));
+        successModal       = new bootstrap.Modal(document.getElementById('successModal'));
+        trackingModal      = new bootstrap.Modal(document.getElementById('trackingModal'));
         renderCart();
-        // Tự động gọi hàm lấy món ăn khi web vừa bật lên
         loadProducts();
     });
 
-    // ================= GỌI API BACKEND (THỰC ĐƠN) =================
     async function loadProducts() {
         try {
-            // Gọi API lấy dữ liệu từ Spring Boot (Đã hỗ trợ đường link từ Render)
-            const response = await fetch('/api/products');
-            const products = await response.json();
+            const res      = await fetch('/api/products');
+            const products = await res.json();
+            const grid     = document.getElementById('productList');
+            const active   = products.filter(p => p.status === 'active');
 
-            const productList = document.getElementById('productList');
-            productList.innerHTML = ''; // Xóa sạch dữ liệu trắng màn hình
+            if (active.length === 0) {
+                grid.innerHTML = `<div class="state-center"><i class="bi bi-basket"></i><p>Thực đơn đang trống!</p></div>`;
+                return;
+            }
 
-            // Lặp qua dữ liệu và render HTML
-            products.forEach(item => {
-                if (item.status === 'active') {
-                    productList.innerHTML += `
-                            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
-                                <div class="card h-100 shadow-sm product-card">
-                                    <img src="${item.imageUrl}" class="card-img-top" alt="${item.name}" style="height: 200px; object-fit: cover;">
-                                    <div class="card-body text-center">
-                                        <h5 class="card-title fw-bold">${item.name}</h5>
-                                        <p class="card-text text-danger fw-bold fs-5">${item.price.toLocaleString('vi-VN')}đ</p>
-                                        <button class="btn btn-dark w-100 fw-bold" onclick="addToCart('${item.name}', ${item.price})">Thêm vào giỏ</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                }
-            });
-        } catch (error) {
-            console.error("Lỗi lấy dữ liệu:", error);
-            document.getElementById('productList').innerHTML = '<h5 class="text-center text-danger w-100 mt-5">Lỗi kết nối máy chủ dữ liệu! Vui lòng thử lại sau.</h5>';
+            grid.innerHTML = active.map(item => `
+                <div class="pc">
+                    <img src="${item.imageUrl}" alt="${item.name}" onerror="this.src='https://placehold.co/400x180/f5f5f5/aaa?text=${encodeURIComponent(item.name)}'">
+                    <div class="pc-body">
+                        <div class="pc-name">${item.name}</div>
+                        <div class="pc-price">${item.price.toLocaleString('vi-VN')}đ</div>
+                        <button class="btn-add" onclick="addToCart('${item.name}', ${item.price})">
+                            <i class="bi bi-plus"></i> Thêm vào giỏ
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            document.getElementById('productList').innerHTML = `<div class="state-center"><i class="bi bi-wifi-off"></i><p style="color:#dc2626">Lỗi kết nối máy chủ!</p></div>`;
         }
     }
 
-    // ================= XỬ LÝ GIỎ HÀNG =================
     function addToCart(name, price) {
-        const existingItem = cart.find(item => item.name === name);
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cart.push({ name: name, price: price, quantity: 1 });
-        }
+        const ex = cart.find(i => i.name === name);
+        if (ex) ex.quantity++;
+        else cart.push({ name, price, quantity: 1 });
         saveAndRenderCart();
-        alert(`Đã thêm ${name} vào giỏ hàng thành công!`);
+        const t = document.getElementById('addToast');
+        document.getElementById('addToastMsg').textContent = 'Đã thêm ' + name;
+        t.classList.add('show');
+        clearTimeout(t._t);
+        t._t = setTimeout(() => t.classList.remove('show'), 2000);
     }
 
-    function removeFromCart(index) {
-        cart.splice(index, 1);
-        saveAndRenderCart();
+    function removeFromCart(i) { cart.splice(i, 1); saveAndRenderCart(); }
+
+    function updateQuantity(i, v) {
+        const q = parseInt(v);
+        if (isNaN(q) || q < 1) removeFromCart(i);
+        else { cart[i].quantity = q; saveAndRenderCart(); }
     }
 
-    function updateQuantity(index, value) {
-        let qty = parseInt(value);
-        if (isNaN(qty) || qty < 1) removeFromCart(index);
-        else {
-            cart[index].quantity = qty;
-            saveAndRenderCart();
-        }
-    }
-
-    function saveAndRenderCart() {
-        localStorage.setItem('shopCart', JSON.stringify(cart));
-        renderCart();
-    }
+    function saveAndRenderCart() { localStorage.setItem('shopCart', JSON.stringify(cart)); renderCart(); }
 
     function renderCart() {
-        const cartItemsContainer = document.getElementById('cartItems');
-        const cartTotalElement = document.getElementById('cartTotal');
-        const cartBadge = document.getElementById('cartBadge');
-
-        if(!cartItemsContainer) return;
-        cartItemsContainer.innerHTML = '';
-        let total = 0, totalQty = 0;
+        const wrap  = document.getElementById('cartItemsWrapper');
+        const total = document.getElementById('cartTotal');
+        const badge = document.getElementById('cartBadge');
+        if (!wrap) return;
+        let sum = 0, qty = 0;
 
         if (cart.length === 0) {
-            cartItemsContainer.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-3">Giỏ hàng trống rỗng!</td></tr>`;
-            cartTotalElement.innerText = "0đ";
-            cartBadge.innerText = "0";
-            return;
+            wrap.innerHTML = `<div class="empty-cart"><i class="bi bi-bag"></i><p>Giỏ hàng trống<br><small>Hãy chọn món nhé!</small></p></div>`;
+            total.textContent = '0đ'; badge.textContent = '0'; return;
         }
 
-        cart.forEach((item, index) => {
-            let itemTotal = item.price * item.quantity;
-            total += itemTotal;
-            totalQty += item.quantity;
-            cartItemsContainer.innerHTML += `
-                    <tr>
-                        <td><strong>${item.name}</strong></td>
-                        <td>
-                            <input type="number" class="form-control form-control-sm text-center"
-                                value="${item.quantity}" min="1" onchange="updateQuantity(${index}, this.value)">
-                        </td>
-                        <td>${item.price.toLocaleString('vi-VN')}đ</td>
-                        <td class="text-danger fw-bold">${itemTotal.toLocaleString('vi-VN')}đ</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})"><i class="bi bi-trash"></i></button>
-                        </td>
-                    </tr>
-                `;
-        });
-        cartTotalElement.innerText = total.toLocaleString('vi-VN') + "đ";
-        cartBadge.innerText = totalQty;
+        wrap.innerHTML = cart.map((item, i) => {
+            const t = item.price * item.quantity;
+            sum += t; qty += item.quantity;
+            return `<div class="cart-item">
+                <div class="ci-name">${item.name}</div>
+                <input class="ci-qty" type="number" value="${item.quantity}" min="1" onchange="updateQuantity(${i}, this.value)">
+                <div class="ci-price">${t.toLocaleString('vi-VN')}đ</div>
+                <button class="ci-del" onclick="removeFromCart(${i})"><i class="bi bi-trash"></i></button>
+            </div>`;
+        }).join('');
+        total.textContent = sum.toLocaleString('vi-VN') + 'đ';
+        badge.textContent = qty;
     }
 
-    // ================= XỬ LÝ FORM ĐẶT HÀNG =================
     function toggleOrderTypeFields() {
-        const type = document.getElementById('orderType').value;
-        const fieldAtShop = document.getElementById('fieldAtShop');
-        const fieldDelivery = document.getElementById('fieldDelivery');
-        const fieldCustomerInfo = document.getElementById('fieldCustomerInfo');
-
-        if (type === 'at_shop') {
-            fieldAtShop.classList.remove('d-none');
-            fieldDelivery.classList.add('d-none');
-            fieldCustomerInfo.classList.add('d-none');
-        } else {
-            fieldAtShop.classList.add('d-none');
-            fieldDelivery.classList.remove('d-none');
-            fieldCustomerInfo.classList.remove('d-none');
-        }
+        const t = document.getElementById('orderType').value;
+        document.getElementById('fieldAtShop').classList.toggle('d-none',       t !== 'at_shop');
+        document.getElementById('fieldDelivery').classList.toggle('d-none',     t !== 'delivery');
+        document.getElementById('fieldCustomerInfo').classList.toggle('d-none', t !== 'delivery');
     }
 
     function validateAndChoosePayment() {
-        if (cart.length === 0) { alert("Giỏ hàng đang trống!"); return; }
-        const type = document.getElementById('orderType').value;
-
-        if (type === 'at_shop') {
-            if (!document.getElementById('tableNumber').value.trim()) { alert("Vui lòng nhập số bàn ăn!"); return; }
+        if (!cart.length) { alert('Giỏ hàng trống!'); return; }
+        const t = document.getElementById('orderType').value;
+        if (t === 'at_shop') {
+            if (!document.getElementById('tableNumber').value.trim()) { alert('Vui lòng nhập số bàn!'); return; }
         } else {
-            if (!document.getElementById('cusName').value.trim()) { alert("Vui lòng điền họ tên!"); return; }
-            if (!document.getElementById('cusPhone').value.trim()) { alert("Vui lòng nhập số điện thoại!"); return; }
-            if (!document.getElementById('deliveryAddress').value.trim()) { alert("Vui lòng nhập địa chỉ!"); return; }
+            if (!document.getElementById('cusName').value.trim())         { alert('Vui lòng điền họ tên!'); return; }
+            if (!document.getElementById('cusPhone').value.trim())        { alert('Vui lòng nhập SĐT!'); return; }
+            if (!document.getElementById('deliveryAddress').value.trim()) { alert('Vui lòng nhập địa chỉ!'); return; }
         }
-        cartModal.hide();
-        paymentChoiceModal.show();
+        cartModal.hide(); paymentChoiceModal.show();
     }
 
     async function submitOrder(paymentMethod) {
         paymentChoiceModal.hide();
+        const type   = document.getElementById('orderType').value;
+        const amount = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+        const code   = 'DH' + Math.floor(100000 + Math.random() * 900000);
 
-        const type = document.getElementById('orderType').value;
-        let totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        let orderCode = "DH" + Math.floor(100000 + Math.random() * 900000);
-
-        // Gom thông tin đơn hàng để gửi lên backend
-        const orderData = {
-            orderCode: orderCode,
-            customerName: type === 'at_shop' ? ('Khách bàn ' + document.getElementById('tableNumber').value.trim()) : document.getElementById('cusName').value.trim(),
-            customerPhone: type === 'at_shop' ? '' : document.getElementById('cusPhone').value.trim(),
-            orderType: type,
-            tableNumber: type === 'at_shop' ? parseInt(document.getElementById('tableNumber').value.trim()) || null : null,
+        const data = {
+            orderCode: code,
+            customerName:    type === 'at_shop' ? 'Khách bàn ' + document.getElementById('tableNumber').value.trim() : document.getElementById('cusName').value.trim(),
+            customerPhone:   type === 'at_shop' ? '' : document.getElementById('cusPhone').value.trim(),
+            orderType:       type,
+            tableNumber:     type === 'at_shop' ? (parseInt(document.getElementById('tableNumber').value.trim()) || null) : null,
             deliveryAddress: type === 'delivery' ? document.getElementById('deliveryAddress').value.trim() : '',
-            totalAmount: totalAmount,
-            paymentMethod: paymentMethod,
-            status: 'PENDING'
+            totalAmount: amount, paymentMethod, status: 'PENDING'
         };
 
-        // Gửi đơn hàng lên backend (lưu vào database)
         try {
-            await fetch('/api/orders', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(orderData)
-            });
-        } catch (err) {
-            console.error('Lỗi gửi đơn hàng lên server:', err);
-            // Vẫn tiếp tục hiển thị thông báo thành công cho khách
-        }
+            await fetch('/api/orders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        } catch (e) { console.error(e); }
 
         if (paymentMethod === 'PAY_NOW') {
-            let memo = `THANH TOAN MA DON ${orderCode}`;
-            let vietQrUrl = `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNo}-compact.png?amount=${totalAmount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(BANK_CONFIG.accountName)}`;
-
-            document.getElementById('displayOrderCodeQR').innerText = orderCode;
-            document.getElementById('qrCodeImg').src = vietQrUrl;
-            document.getElementById('qrMemo').innerText = memo;
-            document.getElementById('qrAmount').innerText = totalAmount.toLocaleString('vi-VN') + "đ";
+            const memo = `THANH TOAN MA DON ${code}`;
+            document.getElementById('displayOrderCodeQR').textContent = code;
+            document.getElementById('qrCodeImg').src = `https://img.vietqr.io/image/${BANK_CONFIG.bankId}-${BANK_CONFIG.accountNo}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(memo)}&accountName=${encodeURIComponent(BANK_CONFIG.accountName)}`;
+            document.getElementById('qrMemo').textContent   = memo;
+            document.getElementById('qrAmount').textContent = amount.toLocaleString('vi-VN') + 'đ';
             qrModal.show();
-        } else if (paymentMethod === 'COD') {
-            document.getElementById('displayOrderCodeCOD').innerText = orderCode;
+        } else {
+            document.getElementById('displayOrderCodeCOD').textContent = code;
             successModal.show();
         }
     }
 
-    function clearCartAndReload() {
-        cart = [];
-        localStorage.removeItem('shopCart');
-        window.location.reload(); // Tải lại trang cho suôn sẻ
-    }
+    function clearCartAndReload() { cart = []; localStorage.removeItem('shopCart'); window.location.reload(); }
 
-    // ================= XỬ LÝ TRA CỨU ĐƠN =================
     async function trackOrder() {
         const code = document.getElementById('searchOrderCode').value.trim().toUpperCase();
-        if (!code) { alert("Đại ca vui lòng nhập mã đơn!"); return; }
-
-        const resultDiv = document.getElementById('trackingResult');
-        resultDiv.classList.remove('d-none');
-        resultDiv.innerHTML = '<div class="text-center my-3"><div class="spinner-border text-info"></div></div>';
-
+        if (!code) { alert('Vui lòng nhập mã đơn!'); return; }
+        const res = document.getElementById('trackingResult');
+        res.classList.remove('d-none');
+        res.innerHTML = `<div style="text-align:center;padding:20px"><div class="spin" style="margin:0 auto"></div></div>`;
         try {
-            const response = await fetch(`/api/orders/${code}`);
-
-            if (!response.ok || response.status === 404) {
-                resultDiv.innerHTML = `<p class="text-danger text-center mt-3 fw-bold">Không tìm thấy đơn hàng với mã: <strong>${code}</strong></p>`;
-                return;
-            }
-
-            const order = await response.json();
-            if (!order) {
-                resultDiv.innerHTML = `<p class="text-danger text-center mt-3 fw-bold">Không tìm thấy đơn hàng với mã: <strong>${code}</strong></p>`;
-                return;
-            }
-
-            let badgeClass = 'bg-warning text-dark';
-            let statusText = 'Chờ xử lý';
-            if (order.status === 'COMPLETED') { badgeClass = 'bg-success'; statusText = 'Đã hoàn thành ✅'; }
-            if (order.status === 'CANCELLED') { badgeClass = 'bg-danger'; statusText = 'Đã hủy đơn ❌'; }
-
-            let details = order.orderType === 'at_shop'
-                ? `<i class="bi bi-table me-1"></i>Bàn số: <strong>${order.tableNumber}</strong>`
-                : `<i class="bi bi-geo-alt me-1"></i>Địa chỉ: <strong>${order.deliveryAddress}</strong>`;
-
-            resultDiv.innerHTML = `
-                <div class="alert alert-info border shadow-sm mt-3">
-                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-receipt me-2"></i>Mã Đơn: ${order.orderCode}</h6>
-                    <p class="mb-1"><strong>Khách hàng:</strong> ${order.customerName} ${order.customerPhone ? '– ' + order.customerPhone : ''}</p>
-                    <p class="mb-1">${details}</p>
-                    <p class="mb-1"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">${order.totalAmount.toLocaleString('vi-VN')}đ</span></p>
-                    <p class="mb-1"><strong>Thanh toán:</strong> ${order.paymentMethod === 'PAY_NOW' ? 'Chuyển khoản QR' : 'Tiền mặt khi nhận'}</p>
-                    <p class="mb-0"><strong>Trạng thái:</strong> <span class="badge ${badgeClass}">${statusText}</span></p>
-                </div>
-            `;
-        } catch (error) {
-            resultDiv.innerHTML = '<p class="text-danger text-center mt-3 fw-bold">Lỗi hệ thống hoặc không tìm thấy đơn!</p>';
+            const r = await fetch(`/api/orders/${code}`);
+            if (!r.ok) throw new Error();
+            const o = await r.json();
+            if (!o) throw new Error();
+            let sColor = '#ca8a04', sTxt = '⏳ Chờ xử lý';
+            if (o.status === 'COMPLETED') { sColor = '#16a34a'; sTxt = '✅ Hoàn thành'; }
+            if (o.status === 'CANCELLED') { sColor = '#dc2626'; sTxt = '❌ Đã hủy'; }
+            const detail = o.orderType === 'at_shop' ? `🪑 Bàn ${o.tableNumber}` : `📍 ${o.deliveryAddress}`;
+            res.innerHTML = `<div class="track-card">
+                <div class="tf"><div class="tf-lbl">Mã đơn</div><div class="tf-val" style="font-size:18px;color:var(--or);font-weight:800">${o.orderCode}</div></div>
+                <div class="tf"><div class="tf-lbl">Khách hàng</div><div class="tf-val">${o.customerName}${o.customerPhone ? ' · ' + o.customerPhone : ''}</div></div>
+                <div class="tf"><div class="tf-lbl">Hình thức</div><div class="tf-val">${detail}</div></div>
+                <div class="tf"><div class="tf-lbl">Tổng tiền</div><div class="tf-val" style="font-size:18px;color:var(--or);font-weight:800">${o.totalAmount.toLocaleString('vi-VN')}đ</div></div>
+                <div class="tf"><div class="tf-lbl">Thanh toán</div><div class="tf-val">${o.paymentMethod === 'PAY_NOW' ? '🏦 Chuyển khoản' : '💵 Tiền mặt'}</div></div>
+                <div class="tf"><div class="tf-lbl">Trạng thái</div><div class="tf-val" style="color:${sColor};font-weight:700">${sTxt}</div></div>
+            </div>`;
+        } catch {
+            res.innerHTML = `<div class="track-card" style="border-color:#fee2e2;background:#fef2f2;text-align:center;color:#dc2626">Không tìm thấy đơn <strong>${code}</strong></div>`;
         }
     }
 </script>
