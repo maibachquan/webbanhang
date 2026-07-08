@@ -362,10 +362,37 @@
         paymentChoiceModal.show();
     }
 
-    function submitOrder(paymentMethod) {
+    async function submitOrder(paymentMethod) {
         paymentChoiceModal.hide();
+
+        const type = document.getElementById('orderType').value;
         let totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         let orderCode = "DH" + Math.floor(100000 + Math.random() * 900000);
+
+        // Gom thông tin đơn hàng để gửi lên backend
+        const orderData = {
+            orderCode: orderCode,
+            customerName: type === 'at_shop' ? ('Khách bàn ' + document.getElementById('tableNumber').value.trim()) : document.getElementById('cusName').value.trim(),
+            customerPhone: type === 'at_shop' ? '' : document.getElementById('cusPhone').value.trim(),
+            orderType: type,
+            tableNumber: type === 'at_shop' ? parseInt(document.getElementById('tableNumber').value.trim()) || null : null,
+            deliveryAddress: type === 'delivery' ? document.getElementById('deliveryAddress').value.trim() : '',
+            totalAmount: totalAmount,
+            paymentMethod: paymentMethod,
+            status: 'PENDING'
+        };
+
+        // Gửi đơn hàng lên backend (lưu vào database)
+        try {
+            await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+            });
+        } catch (err) {
+            console.error('Lỗi gửi đơn hàng lên server:', err);
+            // Vẫn tiếp tục hiển thị thông báo thành công cho khách
+        }
 
         if (paymentMethod === 'PAY_NOW') {
             let memo = `THANH TOAN MA DON ${orderCode}`;
@@ -390,7 +417,7 @@
 
     // ================= XỬ LÝ TRA CỨU ĐƠN =================
     async function trackOrder() {
-        const code = document.getElementById('searchOrderCode').value.trim();
+        const code = document.getElementById('searchOrderCode').value.trim().toUpperCase();
         if (!code) { alert("Đại ca vui lòng nhập mã đơn!"); return; }
 
         const resultDiv = document.getElementById('trackingResult');
@@ -398,19 +425,38 @@
         resultDiv.innerHTML = '<div class="text-center my-3"><div class="spinner-border text-info"></div></div>';
 
         try {
-            // TẠM THỜI LÀM GIAO DIỆN CHỜ BACKEND Java
-            // Lát nữa có API thì sẽ mở khóa gọi thẳng xuống Database
+            const response = await fetch(`/api/orders/${code}`);
 
-            setTimeout(() => {
-                resultDiv.innerHTML = `
-                        <div class="alert alert-warning border border-warning shadow-sm mt-3">
-                            <h6 class="fw-bold text-dark mb-2">Mã Đơn: ${code}</h6>
-                            <p class="mb-1"><strong>Trạng thái:</strong> <span class="badge bg-secondary">Chờ xử lý</span></p>
-                            <p class="mb-0 small text-danger"><em>Hệ thống đang chờ nối thông mạch phần đặt đơn xuống MySQL!</em></p>
-                        </div>
-                    `;
-            }, 1000);
+            if (!response.ok || response.status === 404) {
+                resultDiv.innerHTML = `<p class="text-danger text-center mt-3 fw-bold">Không tìm thấy đơn hàng với mã: <strong>${code}</strong></p>`;
+                return;
+            }
 
+            const order = await response.json();
+            if (!order) {
+                resultDiv.innerHTML = `<p class="text-danger text-center mt-3 fw-bold">Không tìm thấy đơn hàng với mã: <strong>${code}</strong></p>`;
+                return;
+            }
+
+            let badgeClass = 'bg-warning text-dark';
+            let statusText = 'Chờ xử lý';
+            if (order.status === 'COMPLETED') { badgeClass = 'bg-success'; statusText = 'Đã hoàn thành ✅'; }
+            if (order.status === 'CANCELLED') { badgeClass = 'bg-danger'; statusText = 'Đã hủy đơn ❌'; }
+
+            let details = order.orderType === 'at_shop'
+                ? `<i class="bi bi-table me-1"></i>Bàn số: <strong>${order.tableNumber}</strong>`
+                : `<i class="bi bi-geo-alt me-1"></i>Địa chỉ: <strong>${order.deliveryAddress}</strong>`;
+
+            resultDiv.innerHTML = `
+                <div class="alert alert-info border shadow-sm mt-3">
+                    <h6 class="fw-bold text-dark mb-2"><i class="bi bi-receipt me-2"></i>Mã Đơn: ${order.orderCode}</h6>
+                    <p class="mb-1"><strong>Khách hàng:</strong> ${order.customerName} ${order.customerPhone ? '– ' + order.customerPhone : ''}</p>
+                    <p class="mb-1">${details}</p>
+                    <p class="mb-1"><strong>Tổng tiền:</strong> <span class="text-danger fw-bold">${order.totalAmount.toLocaleString('vi-VN')}đ</span></p>
+                    <p class="mb-1"><strong>Thanh toán:</strong> ${order.paymentMethod === 'PAY_NOW' ? 'Chuyển khoản QR' : 'Tiền mặt khi nhận'}</p>
+                    <p class="mb-0"><strong>Trạng thái:</strong> <span class="badge ${badgeClass}">${statusText}</span></p>
+                </div>
+            `;
         } catch (error) {
             resultDiv.innerHTML = '<p class="text-danger text-center mt-3 fw-bold">Lỗi hệ thống hoặc không tìm thấy đơn!</p>';
         }
