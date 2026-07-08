@@ -143,7 +143,8 @@
     let addModal;
 
     window.addEventListener('DOMContentLoaded', () => {
-        loadAdminOrders();
+        addModal = new bootstrap.Modal(document.getElementById('addProductModal'));
+        loadAdminProducts(); // Tự động load dữ liệu khi vào trang
     });
 
     // 1. GỌI API LẤY DANH SÁCH MÓN ĂN
