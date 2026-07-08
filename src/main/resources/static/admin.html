@@ -11,8 +11,6 @@
         .sidebar { min-height: 100vh; background-color: #343a40; color: white; }
         .nav-link { color: #c2c7d0; margin-bottom: 5px; cursor: pointer; }
         .nav-link:hover, .nav-link.active { background-color: #007bff; color: white; border-radius: 5px; }
-        .revenue-card { transition: transform 0.2s; }
-        .revenue-card:hover { transform: translateY(-5px); }
     </style>
 </head>
 <body>
@@ -33,11 +31,6 @@
                         <i class="bi bi-box-seam me-2"></i> Quản lý Thực đơn
                     </button>
                 </li>
-                <li class="nav-item">
-                    <button class="nav-link w-100 text-start mt-2 text-success fw-bold" data-bs-toggle="tab" data-bs-target="#revenue" type="button">
-                        <i class="bi bi-graph-up-arrow me-2"></i> Báo cáo Doanh thu
-                    </button>
-                </li>
             </ul>
         </div>
 
@@ -45,10 +38,25 @@
             <div class="tab-content">
 
                 <div class="tab-pane fade show active" id="orders">
-                    <h2 class="fw-bold mb-4">Quản lý Đơn hàng (Đang hoàn thiện Backend)</h2>
+                    <h2 class="fw-bold mb-4">Quản lý Đơn hàng</h2>
                     <div class="card shadow-sm border-0">
-                        <div class="card-body text-center py-5">
-                            <h5 class="text-muted">Tính năng lấy đơn hàng đang chờ kết nối API Java...</h5>
+                        <div class="card-body p-0">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-dark">
+                                <tr>
+                                    <th>Mã Đơn</th>
+                                    <th>Khách hàng</th>
+                                    <th>Hình thức</th>
+                                    <th>Chi tiết nhận</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th class="text-center">Thao tác</th>
+                                </tr>
+                                </thead>
+                                <tbody id="adminOrderList">
+                                <tr><td colspan="7" class="text-center py-3">Đang tải dữ liệu đơn hàng...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -75,23 +83,9 @@
                                 </tr>
                                 </thead>
                                 <tbody id="adminProductList">
-                                <tr><td colspan="6" class="text-center py-3">Đang tải dữ liệu...</td></tr>
+                                <tr><td colspan="6" class="text-center py-3">Đang tải dữ liệu món ăn...</td></tr>
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="tab-pane fade" id="revenue">
-                    <h2 class="fw-bold mb-4">Báo cáo Doanh thu</h2>
-                    <div class="row g-4 mb-4">
-                        <div class="col-md-3">
-                            <div class="card bg-primary text-white shadow-sm border-0 revenue-card h-100">
-                                <div class="card-body">
-                                    <h6 class="card-title text-uppercase fw-bold"><i class="bi bi-calendar-day me-2"></i>Hôm nay</h6>
-                                    <h3 class="fw-bold mt-3">1.250.000đ</h3>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -139,22 +133,24 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const API_URL = '/api/products';
     let addModal;
 
     window.addEventListener('DOMContentLoaded', () => {
         addModal = new bootstrap.Modal(document.getElementById('addProductModal'));
-        loadAdminProducts(); // Tự động load dữ liệu khi vào trang
+
+        // Gọi dữ liệu thật từ máy chủ lên màn hình quản trị
+        loadAdminProducts();
+        loadAdminOrders();
     });
 
-    // 1. GỌI API LẤY DANH SÁCH MÓN ĂN
+    // ================= 1. QUẢN LÝ THỰC ĐƠN (PRODUCTS) =================
     async function loadAdminProducts() {
         try {
-            const response = await fetch(API_URL);
+            const response = await fetch('/api/products');
             const products = await response.json();
 
             const tbody = document.getElementById('adminProductList');
-            tbody.innerHTML = ''; // Xóa trắng dữ liệu cũ
+            tbody.innerHTML = '';
 
             if(products.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Thực đơn đang trống. Hãy thêm món mới!</td></tr>`;
@@ -179,51 +175,82 @@
                 `;
             });
         } catch (error) {
-            console.error("Lỗi:", error);
-            document.getElementById('adminProductList').innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Lỗi tải dữ liệu. Hãy chắc chắn Spring Boot đang chạy!</td></tr>`;
+            console.error("Lỗi tải món ăn:", error);
+            document.getElementById('adminProductList').innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Lỗi kết nối API lấy danh sách món ăn!</td></tr>`;
         }
     }
-    // Tự động load thêm danh sách đơn hàng khi mở trang quản trị
-    window.addEventListener('DOMContentLoaded', () => {
-        loadAdminOrders();
-    });
 
-    // ================= QUẢN LÝ ĐƠN HÀNG CHO ADMIN =================
+    async function submitNewProduct() {
+        const name = document.getElementById('newProductName').value.trim();
+        const price = document.getElementById('newProductPrice').value.trim();
+        const imageUrl = document.getElementById('newProductImage').value.trim();
+        const status = document.getElementById('newProductStatus').value;
+
+        if(!name || !price) {
+            alert("Đại ca vui lòng nhập tên và giá món ăn!");
+            return;
+        }
+
+        const newProduct = {
+            name: name,
+            price: parseInt(price),
+            imageUrl: imageUrl || "https://via.placeholder.com/400x300?text=Chua+co+anh",
+            status: status
+        };
+
+        try {
+            const response = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newProduct)
+            });
+
+            if (response.ok) {
+                alert("Đã lưu món ăn vào Database thành công!");
+                addModal.hide();
+                document.getElementById('newProductName').value = '';
+                document.getElementById('newProductPrice').value = '';
+                document.getElementById('newProductImage').value = '';
+                loadAdminProducts();
+            }
+        } catch (error) {
+            console.error("Lỗi thêm món:", error);
+            alert("Có lỗi xảy ra khi lưu món ăn!");
+        }
+    }
+
+    async function deleteProduct(id) {
+        if(confirm(`Đại ca có chắc chắn muốn xóa món ID #${id} vĩnh viễn khỏi Database không?`)) {
+            try {
+                const response = await fetch(`/api/products/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadAdminProducts();
+                }
+            } catch (error) {
+                console.error("Lỗi xóa món:", error);
+                alert("Không thể xóa món ăn này!");
+            }
+        }
+    }
+
+    // ================= 2. QUẢN LÝ ĐƠN HÀNG (ORDERS) =================
     async function loadAdminOrders() {
         try {
             const response = await fetch('/api/orders');
             const orders = await response.json();
 
-            const ordersTab = document.getElementById('orders');
-            ordersTab.innerHTML = `
-                <h2 class="fw-bold mb-4">Quản lý Đơn hàng</h2>
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-0">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Mã Đơn</th>
-                                    <th>Khách hàng</th>
-                                    <th>Hình thức</th>
-                                    <th>Chi tiết nhận</th>
-                                    <th>Tổng tiền</th>
-                                    <th>Trạng thái</th>
-                                    <th class="text-center">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="adminOrderList"></tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-
             const tbody = document.getElementById('adminOrderList');
+            tbody.innerHTML = '';
+
             if (orders.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Chưa có đơn hàng nào được đặt.</td></tr>`;
                 return;
             }
 
-            // Sắp xếp đơn mới lên đầu
+            // Đảo ngược mảng để đơn hàng mới nhất nhảy lên đầu bảng
             orders.reverse().forEach(order => {
                 let badgeClass = 'bg-warning';
                 let statusText = 'Chờ xử lý';
@@ -254,78 +281,21 @@
             });
         } catch (error) {
             console.error("Lỗi tải đơn hàng:", error);
+            document.getElementById('adminOrderList').innerHTML = `<tr><td colspan="7" class="text-center text-danger py-3">Lỗi kết nối API lấy danh sách đơn hàng!</td></tr>`;
         }
     }
 
-    // Hàm gọi API đổi trạng thái đơn hàng (Duyệt/Hủy)
     async function updateStatus(id, newStatus) {
         try {
             const response = await fetch(`/api/orders/${id}/status?status=${newStatus}`, {
                 method: 'PUT'
             });
             if (response.ok) {
-                loadAdminOrders(); // Tải lại danh sách đơn hàng ngay lập tức
+                loadAdminOrders();
             }
         } catch (error) {
+            console.error("Lỗi đổi trạng thái đơn:", error);
             alert("Lỗi cập nhật đơn hàng!");
-        }
-    }
-
-    // 2. GỌI API THÊM MÓN MỚI (POST)
-    async function submitNewProduct() {
-        const name = document.getElementById('newProductName').value.trim();
-        const price = document.getElementById('newProductPrice').value.trim();
-        const imageUrl = document.getElementById('newProductImage').value.trim();
-        const status = document.getElementById('newProductStatus').value;
-
-        if(!name || !price) {
-            alert("Đại ca vui lòng nhập tên và giá món ăn!");
-            return;
-        }
-
-        const newProduct = {
-            name: name,
-            price: parseInt(price),
-            imageUrl: imageUrl || "https://via.placeholder.com/400x300?text=Chưa+có+ảnh",
-            status: status
-        };
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newProduct)
-            });
-
-            if (response.ok) {
-                alert("Đã lưu món ăn vào Database thành công!");
-                addModal.hide(); // Ẩn khung thêm
-                document.getElementById('newProductName').value = ''; // Reset form
-                document.getElementById('newProductPrice').value = '';
-                document.getElementById('newProductImage').value = '';
-                loadAdminProducts(); // Tải lại bảng ngay lập tức
-            }
-        } catch (error) {
-            console.error("Lỗi thêm món:", error);
-            alert("Có lỗi xảy ra khi lưu món ăn!");
-        }
-    }
-
-    // 3. GỌI API XÓA MÓN (DELETE)
-    async function deleteProduct(id) {
-        if(confirm(`Đại ca có chắc chắn muốn xóa món ID #${id} vĩnh viễn khỏi Database không?`)) {
-            try {
-                const response = await fetch(`${API_URL}/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    loadAdminProducts(); // Tải lại bảng để món đó biến mất
-                }
-            } catch (error) {
-                console.error("Lỗi xóa món:", error);
-                alert("Không thể xóa món ăn này!");
-            }
         }
     }
 </script>
