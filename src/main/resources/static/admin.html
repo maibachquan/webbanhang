@@ -184,6 +184,9 @@
         }
     }
     // Tự động load thêm danh sách đơn hàng khi mở trang quản trị
+    window.addEventListener('DOMContentLoaded', () => {
+        loadAdminOrders();
+    });
 
     // ================= QUẢN LÝ ĐƠN HÀNG CHO ADMIN =================
     async function loadAdminOrders() {
